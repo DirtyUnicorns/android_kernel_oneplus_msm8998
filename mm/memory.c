@@ -1738,6 +1738,7 @@ int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
 	unsigned long next;
 	unsigned long end = addr + PAGE_ALIGN(size);
 	struct mm_struct *mm = vma->vm_mm;
+	unsigned long remap_pfn = pfn;
 	int err;
 
 	/*
@@ -1764,7 +1765,7 @@ int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
 		vma->vm_pgoff = pfn;
 	}
 
-	err = track_pfn_remap(vma, &prot, pfn, addr, PAGE_ALIGN(size));
+	err = track_pfn_remap(vma, &prot, remap_pfn, addr, PAGE_ALIGN(size));
 	if (err)
 		return -EINVAL;
 
@@ -1783,7 +1784,7 @@ int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
 	} while (pgd++, addr = next, addr != end);
 
 	if (err)
-		untrack_pfn(vma, pfn, PAGE_ALIGN(size));
+		untrack_pfn(vma, remap_pfn, PAGE_ALIGN(size));
 
 	return err;
 }
