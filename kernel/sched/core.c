@@ -8323,7 +8323,7 @@ void sched_move_task(struct task_struct *tsk)
 	queued = task_on_rq_queued(tsk);
 
 	if (queued)
-		dequeue_task(rq, tsk, DEQUEUE_SAVE);
+		dequeue_task(rq, tsk, DEQUEUE_SAVE | DEQUEUE_MOVE);
 	if (unlikely(running))
 		put_prev_task(rq, tsk);
 
