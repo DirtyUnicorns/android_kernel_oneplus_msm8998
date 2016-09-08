@@ -1614,6 +1614,7 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 		if (task_may_not_preempt(tgt_task, target))
 			target = find_lowest_rq(p, sync);
 	}
+
 	/*
 	 * Possible race. Don't bother moving it if the
 	 * destination CPU is not running a lower priority task.
