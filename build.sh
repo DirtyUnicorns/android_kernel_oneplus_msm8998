@@ -9,7 +9,7 @@
 # Resources
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image.gz-dtb"
-DEFCONFIG="msmcortex-perf_defconfig"
+DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
 VER=Adin-Kernel
