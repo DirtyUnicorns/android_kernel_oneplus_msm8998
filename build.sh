@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #
-#  Build Script for Chemi Kernel for OnePlus 5!
+#  Build Script for Adin's Kernel for the OnePlus 5!
 #  Based off RenderBroken's build script which is...
-#  ...based off AK's build script - Thanks!
+#  ...based off AK's build script ~~ Thanks!
 #
 
 # Resources
@@ -12,7 +12,7 @@ KERNEL="Image.gz-dtb"
 DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
-VER=Adin-Kernel
+VER=Adin-Kernel-R1
 VARIANT="OP5-OOS-N"
 
 # Vars
@@ -44,8 +44,8 @@ function make_kernel {
 
 function make_zip {
 		cd $REPACK_DIR
-		zip -r9 Adin-Kernel-"$VARIANT".zip *
-		mv Adin-Kernel-"$VARIANT".zip $ZIP_MOVE
+		zip -r9 "$VER"-"$VARIANT".zip *
+		mv "$VER"-"$VARIANT".zip $ZIP_MOVE
 		cd $KERNEL_DIR
 }
 
