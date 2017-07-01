@@ -12,7 +12,7 @@ KERNEL="Image.gz-dtb"
 DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
-VER=Adin-Kernel-R2
+VER=Adin-Kernel-R3
 VARIANT="OP5-OOS-N"
 
 # Vars
