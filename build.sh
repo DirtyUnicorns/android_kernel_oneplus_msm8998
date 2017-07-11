@@ -5,6 +5,8 @@
 #  Based off RenderBroken's build script which is...
 #  ...based off AK's build script ~~ Thanks!
 #
+#  git log --oneline --decorate
+#
 
 # Resources
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
@@ -12,7 +14,7 @@ KERNEL="Image.gz-dtb"
 DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
-VER=Adin-Kernel-R5
+VER=Adin-Kernel-R6
 VARIANT="OP5-OOS-N"
 
 # Vars
