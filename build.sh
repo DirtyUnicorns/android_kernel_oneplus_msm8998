@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-#  Build Script for Adin's Kernel for the OnePlus 5!
+#  Build Script for Carbonite Kernel for the OnePlus 5!
 #  Based off RenderBroken's build script which is...
 #  ...based off AK's build script ~~ Thanks!
 #
@@ -14,7 +14,7 @@ KERNEL="Image.gz-dtb"
 DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
-VER=Adin-Kernel-R6
+VER=Carbonite-Kernel-R6
 VARIANT="OP5-OOS-N"
 
 # Vars
@@ -54,7 +54,7 @@ function make_zip {
 
 DATE_START=$(date +"%s")
 
-echo "Adin's Kernel Creation Script:"
+echo "Carbonite Kernel Creation Script:"
 export CROSS_COMPILE=${HOME}/android/toolchains/google/aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
 echo
 
