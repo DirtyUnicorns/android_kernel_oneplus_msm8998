@@ -14,7 +14,7 @@ KERNEL="Image.gz-dtb"
 DEFCONFIG="oneplus5_defconfig"
 
 # Kernel Details
-VER=Carbonite-Kernel-R6
+VER=Carbonite-Kernel-R7
 VARIANT="OP5-OOS-N"
 
 # Vars
