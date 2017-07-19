@@ -378,6 +378,7 @@ CONFIG_PCI_LABEL=y
 #
 # Kernel Features
 #
+CONFIG_SOUND_CONTROL=y
 
 #
 # ARM errata workarounds via the alternatives framework
