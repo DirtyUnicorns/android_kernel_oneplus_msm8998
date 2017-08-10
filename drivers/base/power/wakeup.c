@@ -23,22 +23,23 @@
 #include "power.h"
 
 static bool enable_qcom_rx_wakelock_ws = true;
-module_param(enable_qcom_rx_wakelock_ws, bool, 0644);
 static bool enable_wlan_extscan_wl_ws = true;
-module_param(enable_wlan_extscan_wl_ws, bool, 0644);
 static bool enable_wlan_wow_wl_ws = true;
-module_param(enable_wlan_wow_wl_ws, bool, 0644);
 static bool enable_ipa_ws = true;
-module_param(enable_ipa_ws, bool, 0644);
 static bool enable_wlan_ws = true;
-module_param(enable_wlan_ws, bool, 0644);
 static bool enable_timerfd_ws = true;
-module_param(enable_timerfd_ws, bool, 0644);
-static bool enable_netmgr_wl_ws = true;
-module_param(enable_netmgr_wl_ws, bool, 0644);
-static bool enable_fpc_ttw_wl_ws = true;
-module_param(enable_fpc_ttw_wl_ws, bool, 0644);
 static bool enable_netlink_ws = true;
+static bool enable_netmgr_wl_ws = true;
+static bool enable_fpc_ttw_wl_ws = true;
+
+module_param(enable_qcom_rx_wakelock_ws, bool, 0644);
+module_param(enable_wlan_extscan_wl_ws, bool, 0644);
+module_param(enable_wlan_wow_wl_ws, bool, 0644);
+module_param(enable_ipa_ws, bool, 0644);
+module_param(enable_wlan_ws, bool, 0644);
+module_param(enable_timerfd_ws, bool, 0644);
+module_param(enable_netmgr_wl_ws, bool, 0644);
+module_param(enable_fpc_ttw_wl_ws, bool, 0644);
 module_param(enable_netlink_ws, bool, 0644);
 
 /*
@@ -590,7 +591,7 @@ static bool wakeup_source_blocker(struct wakeup_source *ws)
 			(!enable_qcom_rx_wakelock_ws &&
 				!strncmp(ws->name, "qcom_rx_wakelock", wslen)) ||
 			(!enable_wlan_wow_wl_ws &&
-	                        !strncmp(ws->name, "wlan_wow_wl", wslen)) ||
+	            !strncmp(ws->name, "wlan_wow_wl", wslen)) ||
 			(!enable_wlan_ws &&
 				!strncmp(ws->name, "wlan", wslen)) ||
 		    	(!enable_netmgr_wl_ws &&
@@ -610,8 +611,7 @@ static bool wakeup_source_blocker(struct wakeup_source *ws)
 			return true;
 		}
 	}
-
-	return false;
+        return false;
 }
 
 /*
