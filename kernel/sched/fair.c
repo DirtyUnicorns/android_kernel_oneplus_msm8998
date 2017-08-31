@@ -6169,6 +6169,9 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 		schedstat_inc(this_rq(), eas_stats.cas_attempts);
 	}
 
+	if (!cpumask_intersects(sched_domain_span(sd), &p->cpus_allowed))
+		return prev_cpu;
+
 	while (sd) {
 		struct sched_group *group;
 		struct sched_domain *tmp;
