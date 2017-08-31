@@ -6160,7 +6160,7 @@ find_idlest_group_cpu(struct sched_group *group, struct task_struct *p, int this
 static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p,
 				  int cpu, int prev_cpu, int sd_flag)
 {
-	int new_cpu = cpu;
+	int new_cpu = prev_cpu;
 	int wu = sd_flag & SD_BALANCE_WAKE;
 	int cas_cpu = -1;
 
@@ -6168,9 +6168,6 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 		schedstat_inc(p, se.statistics.nr_wakeups_cas_attempts);
 		schedstat_inc(this_rq(), eas_stats.cas_attempts);
 	}
-
-	if (!cpumask_intersects(sched_domain_span(sd), &p->cpus_allowed))
-		return prev_cpu;
 
 	while (sd) {
 		struct sched_group *group;
@@ -6192,7 +6189,7 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 		}
 
 		new_cpu = find_idlest_group_cpu(group, p, cpu);
-		if (new_cpu == cpu) {
+		if (new_cpu == -1 || new_cpu == cpu) {
 			/* Now try balancing at a lower domain level of cpu */
 			sd = sd->child;
 			continue;
