@@ -123,7 +123,7 @@ static __read_mostly int poll_ms_dummy;
 module_param_named(polling_interval, poll_ms_dummy, int,
 		S_IRUGO | S_IWUSR | S_IWGRP);
 
-static int disabled;
+static __read_mostly int disabled;
 module_param_named(disabled, disabled, int,
 		S_IRUGO | S_IWUSR | S_IWGRP);
 #ifdef ENABLE_TSENS_SAMPLING
