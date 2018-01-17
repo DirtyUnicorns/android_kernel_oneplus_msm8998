@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.4.111 Kernel Configuration
+# Linux/arm64 4.4.112 Kernel Configuration
 #
 CONFIG_VENDOR_ONEPLUS=y
 CONFIG_ARM64=y
@@ -1229,7 +1229,6 @@ CONFIG_BLK_DEV=y
 # CONFIG_BLK_DEV_NULL_BLK is not set
 # CONFIG_BLK_DEV_PCIESSD_MTIP32XX is not set
 # CONFIG_ZRAM is not set
-# CONFIG_ZRAM_LZ4_COMPRESS is not set
 # CONFIG_BLK_CPQ_CISS_DA is not set
 # CONFIG_BLK_DEV_DAC960 is not set
 # CONFIG_BLK_DEV_UMEM is not set
