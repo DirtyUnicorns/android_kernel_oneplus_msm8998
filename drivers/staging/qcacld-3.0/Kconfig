@@ -13,6 +13,10 @@ config QCACLD_WLAN_LFR3
 	bool "Enable the WLAN Legacy Fast Roaming feature Version 3"
 	default n
 
+config WLAN_FEATURE_FILS
+	bool "Enable FILS Feature (11ai)"
+	default n
+
 config PRIMA_WLAN_OKC
 	bool "Enable the Prima WLAN Opportunistic Key Caching feature"
 	default n
@@ -69,10 +73,6 @@ config MPC_UT_FRAMEWORK
 
 config WLAN_OFFLOAD_PACKETS
 	bool "Enable offload packets feature"
-	default n
-
-config WLAN_FEATURE_MEMDUMP
-	bool "Enable MEMDUMP feature"
 	default n
 
 config FEATURE_TSO
@@ -139,9 +139,4 @@ config ICMP_DISABLE_PS
 config CONFIG_BUILD_TIMESTAMP
 	bool "Embed timestamp in wlan version"
 	default n
-
-config WLAN_FEATURE_FILS
-	bool "QCOM f***ed it up"
-	default n
-
 endif # QCA_CLD_WLAN
