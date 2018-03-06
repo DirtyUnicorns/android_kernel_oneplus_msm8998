@@ -6577,8 +6577,15 @@ static int cpu_util_wake(int cpu, struct task_struct *p)
 	return min_t(unsigned long, util, capacity_orig_of(cpu));
 }
 
+static int start_cpu(bool prefer_idle)
+{
+	struct root_domain *rd = cpu_rq(smp_processor_id())->rd;
+
+	return prefer_idle ? rd->max_cap_orig_cpu : rd->min_cap_orig_cpu;
+}
+
 static inline int find_best_target(struct task_struct *p, int *backup_cpu,
-				   bool boosted, bool prefer_idle)
+				   bool prefer_idle)
 {
 	struct root_domain *rd = cpu_rq(smp_processor_id())->rd;
 	unsigned long min_util = boosted_task_util(p);
@@ -6601,25 +6608,8 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 	schedstat_inc(p, se.statistics.nr_wakeups_fbt_attempts);
 	schedstat_inc(this_rq(), eas_stats.fbt_attempts);
 
-	/*
-	 * target_capacity tracks capacity_orig of the most promising candidate
-	 * CPU, which is in most cases the most energy efficient CPU, thus
-	 * requiring to minimise target_capacity. For these cases we initialise
-	 * target_capacity to ULONG_MAX.
-	 * However, for prefer_idle and boosted tasks we look for a high
-	 * performance CPU, thus requiring to maximise target_capacity. In this
-	 * case we initialise target_capacity to 0.
-	 */
-	if (prefer_idle && boosted)
-		target_capacity = 0;
-
-	/*
-	 * Start from the first maximum capacity CPU.
-	 * This will increase the chances to select a reserved CPU for
-	 * prefer_idle and boosted tasks while not impacting the selection
-	 * of the most energy efficient CPUs in the other cases.
-	 */
-	cpu = rd->max_cap_orig_cpu;
+	/* Find start CPU based on prefer_idle flag*/
+	cpu = start_cpu(prefer_idle);
 	if (cpu < 0) {
 		schedstat_inc(p, se.statistics.nr_wakeups_fbt_no_cpu);
 		schedstat_inc(this_rq(), eas_stats.fbt_no_cpu);
@@ -6984,7 +6974,7 @@ static int select_energy_cpu_brute(struct task_struct *p, int prev_cpu, int sync
 	sync_entity_load_avg(&p->se);
 
 	/* Find a cpu with sufficient capacity */
-	next_cpu = find_best_target(p, &backup_cpu, boosted, prefer_idle);
+	next_cpu = find_best_target(p, &backup_cpu, prefer_idle);
 	if (next_cpu == -1) {
 		target_cpu = prev_cpu;
 		goto unlock;
