@@ -316,13 +316,13 @@ static int audit_compare_uid(kuid_t uid,
 {
 	struct audit_names *n;
 	int rc;
- 
+
 	if (name) {
 		rc = audit_uid_comparator(uid, f->op, name->uid);
 		if (rc)
 			return rc;
 	}
- 
+
 	if (ctx) {
 		list_for_each_entry(n, &ctx->names_list, list) {
 			rc = audit_uid_comparator(uid, f->op, n->uid);
@@ -340,13 +340,13 @@ static int audit_compare_gid(kgid_t gid,
 {
 	struct audit_names *n;
 	int rc;
- 
+
 	if (name) {
 		rc = audit_gid_comparator(gid, f->op, name->gid);
 		if (rc)
 			return rc;
 	}
- 
+
 	if (ctx) {
 		list_for_each_entry(n, &ctx->names_list, list) {
 			rc = audit_gid_comparator(gid, f->op, n->gid);
@@ -1981,21 +1981,22 @@ static void audit_log_set_loginuid(kuid_t koldloginuid, kuid_t kloginuid,
 	if (!audit_enabled)
 		return;
 
+	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_LOGIN);
+	if (!ab)
+		return;
+
 	uid = from_kuid(&init_user_ns, task_uid(current));
 	oldloginuid = from_kuid(&init_user_ns, koldloginuid);
 	loginuid = from_kuid(&init_user_ns, kloginuid),
 	tty = audit_get_tty(current);
 
-	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_LOGIN);
-	if (!ab)
-		return;
 	audit_log_format(ab, "pid=%d uid=%u", task_tgid_nr(current), uid);
 	audit_log_task_context(ab);
 	audit_log_format(ab, " old-auid=%u auid=%u tty=%s old-ses=%u ses=%u res=%d",
 			 oldloginuid, loginuid, tty ? tty_name(tty) : "(none)",
 			 oldsessionid, sessionid, !rc);
 	audit_put_tty(tty);
-	audit_log_end(ab);
+    audit_log_end(ab);
 }
 
 /**
