@@ -6665,6 +6665,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 			if (new_util > capacity_orig)
 				continue;
 
+
 			/*
 			 * Case A) Latency sensitive tasks
 			 *
@@ -6697,26 +6698,19 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 
 				/*
 				 * Case A.1: IDLE CPU
-				 * Return the best IDLE CPU we find:
-				 * - for boosted tasks: the CPU with the highest
-				 * performance (i.e. biggest capacity_orig)
-				 * - for !boosted tasks: the most energy
-				 * efficient CPU (i.e. smallest capacity_orig)
+				 * Return the first IDLE CPU we find.
 				 */
 				if (idle_cpu(i)) {
-					if (boosted &&
-					   (capacity_orig <= target_capacity))
-						continue;
-					if (!boosted &&
-					   (capacity_orig >= target_capacity))
-						continue;
+					schedstat_inc(p, se.statistics.nr_wakeups_fbt_pref_idle);
+					schedstat_inc(this_rq(), eas_stats.fbt_pref_idle);
 
-					target_capacity = capacity_orig;
-					best_idle_cpu = i;
-					continue;
+					trace_sched_find_best_target(p,
+							prefer_idle, min_util,
+							cpu, best_idle_cpu,
+							best_active_cpu, i);
+
+					return i;
 				}
-				if (best_idle_cpu != -1)
-					continue;
 
 				/*
 				 * Case A.2: Target ACTIVE CPU
@@ -6746,7 +6740,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 				best_active_util = new_util;
 				best_active_cpu = i;
 				continue;
-			}
+             }
 
 			/*
 			 * Enforce EAS mode
