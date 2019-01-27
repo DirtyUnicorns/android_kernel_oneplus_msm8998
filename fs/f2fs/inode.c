@@ -68,13 +68,16 @@ static void __get_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
 	}
 }
 
-static bool __written_first_block(struct f2fs_inode *ri)
+static int __written_first_block(struct f2fs_sb_info *sbi,
+					struct f2fs_inode *ri)
 {
 	block_t addr = le32_to_cpu(ri->i_addr[offset_in_addr(ri)]);
 
-	if (is_valid_blkaddr(addr))
-		return true;
-	return false;
+	if (!__is_valid_data_blkaddr(addr))
+		return 1;
+	if (!f2fs_is_valid_blkaddr(sbi, addr, DATA_GENERIC))
+		return -EFAULT;
+	return 0;
 }
 
 static void __set_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
@@ -114,88 +117,46 @@ static void __recover_inline_status(struct inode *inode, struct page *ipage)
 	return;
 }
 
-static bool f2fs_enable_inode_chksum(struct f2fs_sb_info *sbi, struct page *page)
-{
-	struct f2fs_inode *ri = &F2FS_NODE(page)->i;
-
-	if (!f2fs_sb_has_inode_chksum(sbi->sb))
-		return false;
-
-	if (!RAW_IS_INODE(F2FS_NODE(page)) || !(ri->i_inline & F2FS_EXTRA_ATTR))
-		return false;
-
-	if (!F2FS_FITS_IN_INODE(ri, le16_to_cpu(ri->i_extra_isize),
-				i_inode_checksum))
-		return false;
-
-	return true;
-}
-
-static __u32 f2fs_inode_chksum(struct f2fs_sb_info *sbi, struct page *page)
-{
-	struct f2fs_node *node = F2FS_NODE(page);
-	struct f2fs_inode *ri = &node->i;
-	__le32 ino = node->footer.ino;
-	__le32 gen = ri->i_generation;
-	__u32 chksum, chksum_seed;
-	__u32 dummy_cs = 0;
-	unsigned int offset = offsetof(struct f2fs_inode, i_inode_checksum);
-	unsigned int cs_size = sizeof(dummy_cs);
-
-	chksum = f2fs_chksum(sbi, sbi->s_chksum_seed, (__u8 *)&ino,
-							sizeof(ino));
-	chksum_seed = f2fs_chksum(sbi, chksum, (__u8 *)&gen, sizeof(gen));
-
-	chksum = f2fs_chksum(sbi, chksum_seed, (__u8 *)ri, offset);
-	chksum = f2fs_chksum(sbi, chksum, (__u8 *)&dummy_cs, cs_size);
-	offset += cs_size;
-	chksum = f2fs_chksum(sbi, chksum, (__u8 *)ri + offset,
-						F2FS_BLKSIZE - offset);
-	return chksum;
-}
-
-bool f2fs_inode_chksum_verify(struct f2fs_sb_info *sbi, struct page *page)
-{
-	struct f2fs_inode *ri;
-	__u32 provided, calculated;
-
-	if (!f2fs_enable_inode_chksum(sbi, page) ||
-			PageDirty(page) || PageWriteback(page))
-		return true;
-
-	ri = &F2FS_NODE(page)->i;
-	provided = le32_to_cpu(ri->i_inode_checksum);
-	calculated = f2fs_inode_chksum(sbi, page);
-
-	if (provided != calculated)
-		f2fs_msg(sbi->sb, KERN_WARNING,
-			"checksum invalid, ino = %x, %x vs. %x",
-			ino_of_node(page), provided, calculated);
-
-	return provided == calculated;
-}
-
-void f2fs_inode_chksum_set(struct f2fs_sb_info *sbi, struct page *page)
-{
-	struct f2fs_inode *ri = &F2FS_NODE(page)->i;
-
-	if (!f2fs_enable_inode_chksum(sbi, page))
-		return;
-
-	ri->i_inode_checksum = cpu_to_le32(f2fs_inode_chksum(sbi, page));
-}
-
-static bool sanity_check_inode(struct inode *inode)
+static bool sanity_check_inode(struct inode *inode, struct page *node_page)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	unsigned long long iblocks;
 
-	if (f2fs_sb_has_flexible_inline_xattr(sbi->sb)
-			&& !f2fs_has_extra_attr(inode)) {
+	iblocks = le64_to_cpu(F2FS_INODE(node_page)->i_blocks);
+	if (!iblocks) {
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 		f2fs_msg(sbi->sb, KERN_WARNING,
-			"%s: corrupted inode ino=%lx, run fsck to fix.",
-			__func__, inode->i_ino);
+			"%s: corrupted inode i_blocks i_ino=%lx iblocks=%llu, "
+			"run fsck to fix.",
+			__func__, inode->i_ino, iblocks);
 		return false;
+	}
+
+	if (ino_of_node(node_page) != nid_of_node(node_page)) {
+		set_sbi_flag(sbi, SBI_NEED_FSCK);
+		f2fs_msg(sbi->sb, KERN_WARNING,
+			"%s: corrupted inode footer i_ino=%lx, ino,nid: "
+			"[%u, %u] run fsck to fix.",
+			__func__, inode->i_ino,
+			ino_of_node(node_page), nid_of_node(node_page));
+		return false;
+	}
+
+	if (F2FS_I(inode)->extent_tree) {
+		struct extent_info *ei = &F2FS_I(inode)->extent_tree->largest;
+
+		if (ei->len &&
+			(!f2fs_is_valid_blkaddr(sbi, ei->blk, DATA_GENERIC) ||
+			!f2fs_is_valid_blkaddr(sbi, ei->blk + ei->len - 1,
+							DATA_GENERIC))) {
+			set_sbi_flag(sbi, SBI_NEED_FSCK);
+			f2fs_msg(sbi->sb, KERN_WARNING,
+				"%s: inode (ino=%lx) extent info [%u, %u, %u] "
+				"is incorrect, run fsck to fix",
+				__func__, inode->i_ino,
+				ei->blk, ei->fofs, ei->len);
+			return false;
+		}
 	}
 	return true;
 }
@@ -206,7 +167,7 @@ static int do_read_inode(struct inode *inode)
 	struct f2fs_inode_info *fi = F2FS_I(inode);
 	struct page *node_page;
 	struct f2fs_inode *ri;
-	projid_t i_projid;
+	int err;
 
 	/* Check if ino is within scope */
 	if (f2fs_check_nid_range(sbi, inode->i_ino))
@@ -268,6 +229,11 @@ static int do_read_inode(struct inode *inode)
 		fi->i_inline_xattr_size = 0;
 	}
 
+	if (!sanity_check_inode(inode, node_page)) {
+		f2fs_put_page(node_page, 1);
+		return -EINVAL;
+	}
+
 	/* check data exist */
 	if (f2fs_has_inline_data(inode) && !f2fs_exist_data(inode))
 		__recover_inline_status(inode, node_page);
@@ -275,21 +241,13 @@ static int do_read_inode(struct inode *inode)
 	/* get rdev by using inline_info */
 	__get_inode_rdev(inode, ri);
 
-	if (__written_first_block(ri))
-		set_inode_flag(inode, FI_FIRST_BLOCK_WRITTEN);
-
-	if (!f2fs_need_inode_block_update(sbi, inode->i_ino))
-		fi->last_disk_size = inode->i_size;
-
-	if (fi->i_flags & F2FS_PROJINHERIT_FL)
-		set_inode_flag(inode, FI_PROJ_INHERIT);
-
-	if (f2fs_has_extra_attr(inode) && f2fs_sb_has_project_quota(sbi->sb) &&
-			F2FS_FITS_IN_INODE(ri, fi->i_extra_isize, i_projid))
-		i_projid = (projid_t)le32_to_cpu(ri->i_projid);
-	else
-		i_projid = F2FS_DEF_PROJID;
-	fi->i_projid = make_kprojid(&init_user_ns, i_projid);
+	err = __written_first_block(sbi, ri);
+	if (err < 0) {
+		f2fs_put_page(node_page, 1);
+		return err;
+	}
+	if (!err)
+		set_inode_flag(F2FS_I(inode), FI_FIRST_BLOCK_WRITTEN);
 
 	if (f2fs_has_extra_attr(inode) && f2fs_sb_has_inode_crtime(sbi->sb) &&
 			F2FS_FITS_IN_INODE(ri, fi->i_extra_isize, i_crtime)) {
