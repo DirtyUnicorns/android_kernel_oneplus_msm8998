@@ -401,33 +401,42 @@ bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 	return fEqual;
 }
 
-bool csr_is_conn_state_connected_ibss(tpAniSirGlobal pMac, uint32_t sessionId)
+static bool csr_is_conn_state(tpAniSirGlobal mac_ctx, uint32_t session_id,
+			      eCsrConnectState state)
 {
-	return eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED ==
-		pMac->roam.roamSession[sessionId].connectState;
+	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
+	if (session_id >= CSR_ROAM_SESSION_MAX)
+		return false;
+
+	return mac_ctx->roam.roamSession[session_id].connectState == state;
 }
 
-bool csr_is_conn_state_disconnected_ibss(tpAniSirGlobal pMac,
-					 uint32_t sessionId)
+bool csr_is_conn_state_connected_ibss(tpAniSirGlobal mac_ctx,
+				      uint32_t session_id)
 {
-	return eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED ==
-		pMac->roam.roamSession[sessionId].connectState;
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED);
 }
 
-bool csr_is_conn_state_connected_infra(tpAniSirGlobal pMac, uint32_t sessionId)
+bool csr_is_conn_state_disconnected_ibss(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id)
 {
-	return eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED ==
-		pMac->roam.roamSession[sessionId].connectState;
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED);
+}
+
+bool csr_is_conn_state_connected_infra(tpAniSirGlobal mac_ctx,
+				       uint32_t session_id)
+{
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED);
 }
 
 bool csr_is_conn_state_connected(tpAniSirGlobal pMac, uint32_t sessionId)
 {
-	if (csr_is_conn_state_connected_ibss(pMac, sessionId)
-	    || csr_is_conn_state_connected_infra(pMac, sessionId)
-	    || csr_is_conn_state_connected_wds(pMac, sessionId))
-		return true;
-	else
-		return false;
+	return csr_is_conn_state_connected_ibss(pMac, sessionId) ||
+		csr_is_conn_state_connected_infra(pMac, sessionId) ||
+		csr_is_conn_state_connected_wds(pMac, sessionId);
 }
 
 bool csr_is_conn_state_infra(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -441,25 +450,27 @@ bool csr_is_conn_state_ibss(tpAniSirGlobal pMac, uint32_t sessionId)
 	       csr_is_conn_state_disconnected_ibss(pMac, sessionId);
 }
 
-bool csr_is_conn_state_connected_wds(tpAniSirGlobal pMac, uint32_t sessionId)
+bool csr_is_conn_state_connected_wds(tpAniSirGlobal mac_ctx,
+				     uint32_t session_id)
 {
-	return eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED ==
-		pMac->roam.roamSession[sessionId].connectState;
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED);
 }
 
-bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal pMac,
-					  uint32_t sessionId)
+bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal mac_ctx,
+					  uint32_t session_id)
 {
-	return (eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED ==
-		 pMac->roam.roamSession[sessionId].connectState) ||
-	       (eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED ==
-		 pMac->roam.roamSession[sessionId].connectState);
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED) ||
+		csr_is_conn_state(mac_ctx, session_id,
+				  eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED);
 }
 
-bool csr_is_conn_state_disconnected_wds(tpAniSirGlobal pMac, uint32_t sessionId)
+bool csr_is_conn_state_disconnected_wds(tpAniSirGlobal mac_ctx,
+					uint32_t session_id)
 {
-	return eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED ==
-		pMac->roam.roamSession[sessionId].connectState;
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED);
 }
 
 bool csr_is_conn_state_wds(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -3615,6 +3626,28 @@ static inline void csr_update_pmksa_to_profile(tCsrRoamProfile *profile,
 }
 #endif
 
+/**
+ * csr_update_session_pmk() - Update the pmk len and pmk in the roam session
+ * @session: pointer to the CSR Roam session
+ * @pmkid_cache: pointer to the pmkid cache
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void csr_update_session_pmk(tCsrRoamSession *session,
+				   tPmkidCacheInfo *pmkid_cache)
+{
+	session->pmk_len = pmkid_cache->pmk_len;
+	qdf_mem_zero(session->psk_pmk, sizeof(session->psk_pmk));
+	qdf_mem_copy(session->psk_pmk, pmkid_cache->pmk, session->pmk_len);
+}
+#else
+static inline void csr_update_session_pmk(tCsrRoamSession *session,
+					  tPmkidCacheInfo *pmkid_cache)
+{
+}
+#endif
+
 uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			     tCsrRoamProfile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
@@ -3747,6 +3780,14 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			qdf_mem_copy(pPMK->PMKIDList[0].PMKID,
 				     pmkid_cache.PMKID,
 				     CSR_RSN_PMKID_SIZE);
+
+			/*
+			 * If a PMK cache is found for the BSSID, then
+			 * update the PMK in CSR session also as this
+			 * will be sent to the FW during RSO.
+			 */
+			csr_update_session_pmk(session, &pmkid_cache);
+
 			csr_update_pmksa_to_profile(pProfile, &pmkid_cache);
 		} else {
 			pPMK->cPMKIDs = 0;
@@ -4417,28 +4458,8 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			break;
 		}
 
-		if (csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
-			/* If "Legacy Fast Roaming" is enabled ALWAYS rebuild
-			 * the RSN IE from scratch. So it contains the current
-			 * PMK-IDs
-			 */
-			cbRsnIe =
-				csr_construct_rsn_ie(pMac, sessionId, pProfile,
-						     pSirBssDesc, pIes, pRsnIe);
-		} else if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
-			/* If you have one started away, re-use it. */
-			if (pProfile->nRSNReqIELength <=
-					DOT11F_IE_RSN_MAX_LEN) {
-				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
-				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
-					     cbRsnIe);
-			} else
-				sme_warn("csr_retrieve_rsn_ie detect invalid RSN IE length (%d)",
-					pProfile->nRSNReqIELength);
-		} else
-			cbRsnIe = csr_construct_rsn_ie(pMac, sessionId,
-							pProfile,
-						     pSirBssDesc, pIes, pRsnIe);
+		cbRsnIe = csr_construct_rsn_ie(pMac, sessionId, pProfile,
+						pSirBssDesc, pIes, pRsnIe);
 	} while (0);
 
 	return cbRsnIe;

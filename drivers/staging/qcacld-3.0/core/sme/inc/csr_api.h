@@ -779,6 +779,8 @@ typedef enum {
  */
 #define CSR_CB_CHANNEL_GAP 4
 #define CSR_CB_CENTER_CHANNEL_OFFSET    2
+#define CSR_SEC_CHANNEL_OFFSET    4
+
 
 /* WEP keysize (in bits) */
 typedef enum {
@@ -1036,6 +1038,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	eCsrEncryptionType mcEncryptionType;
 	tCsrEncryptionList mcEncryptionInfo;
 	uint8_t operationChannel;
+	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN];
 	uint32_t vht_channel_width;
 	uint16_t beaconInterval;
 	tCsrKeys Keys;
@@ -1305,6 +1308,8 @@ typedef struct tagCsrConfigParam {
 	uint8_t max_amsdu_num;
 	uint8_t nSelect5GHzMargin;
 	uint32_t ho_delay_for_rx;
+	uint32_t roam_preauth_retry_count;
+	uint32_t roam_preauth_no_ack_timeout;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
 	uint8_t isCoalesingInIBSSAllowed;

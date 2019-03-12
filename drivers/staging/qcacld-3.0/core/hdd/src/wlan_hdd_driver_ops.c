@@ -403,10 +403,14 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const struct hif_bus_i
 	if (ret)
 		goto err_hdd_deinit;
 
-
-	if (reinit) {
-		cds_set_recovery_in_progress(false);
-	} else {
+	/*
+	 * Recovery in progress flag will be set if SSR triggered.
+	 * If SSR is triggered during Load time, this flag will be set
+	 * so reset of this flag should be done in both the cases,
+	 * during load time and during re-init
+	 */
+	cds_set_recovery_in_progress(false);
+	if (!reinit) {
 		cds_set_load_in_progress(false);
 		cds_set_driver_loaded(true);
 		hdd_start_complete(0);
@@ -429,10 +433,10 @@ err_hdd_deinit:
 	    re_init_fail_cnt >= SSR_MAX_FAIL_CNT)
 		QDF_BUG(0);
 
-	if (reinit) {
+	cds_set_recovery_in_progress(false);
+	if (reinit)
 		cds_set_driver_in_bad_state(true);
-		cds_set_recovery_in_progress(false);
-	} else
+	else
 		cds_set_load_in_progress(false);
 
 err_init_qdf_ctx:
@@ -459,14 +463,18 @@ static inline void hdd_pld_driver_unloading(struct device *dev)
  */
 static void wlan_hdd_remove(struct device *dev)
 {
+	hdd_context_t *hdd_ctx;
+
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
-
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_warn("External threads are still active attempting driver unload anyway");
+
+	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
 	if (!hdd_wait_for_debugfs_threads_completion())
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
@@ -1382,11 +1390,10 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 {
 	switch (uevent->uevent) {
 	case PLD_FW_DOWN:
-		cds_set_target_ready(false);
-		break;
 	case PLD_RECOVERY:
 		cds_set_target_ready(false);
-		cds_set_recovery_in_progress(true);
+		if (!cds_is_driver_loading())
+			cds_set_recovery_in_progress(true);
 		break;
 	default:
 		return;
@@ -1404,6 +1411,7 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
 	enum cds_driver_state driver_state;
+	hdd_context_t *hdd_ctx;
 
 	ENTER();
 
@@ -1418,6 +1426,13 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 		goto uevent_not_allowed;
 	}
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL return");
+		return;
+	}
+
 	wlan_hdd_set_the_pld_uevent(uevent);
 
 	mutex_lock(&hdd_init_deinit_lock);
@@ -1429,6 +1444,9 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 		break;
 	case PLD_FW_DOWN:
 		hdd_cleanup_on_fw_down();
+		if (pld_is_fw_rejuvenate() &&
+		    hdd_ipa_is_enabled(hdd_ctx))
+			hdd_ipa_fw_rejuvenate_send_msg(hdd_ctx);
 		break;
 	}
 	mutex_unlock(&hdd_init_deinit_lock);

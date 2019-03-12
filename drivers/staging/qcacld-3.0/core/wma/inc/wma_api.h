@@ -368,6 +368,18 @@ static inline QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
 #endif
 
 /**
+ * wma_find_if_fw_supports_dbs() - to check if FW supports DBS
+ *
+ * Firmware sends supported HW mode as part of service ready and
+ * service ready extension WMI message. This API checks through
+ * those HW mode list and figures out if DBS is supported by
+ * FW/HW.
+ *
+ * Return: True if FW/HW supports DBS else returns false.
+ */
+bool wma_find_if_fw_supports_dbs(void);
+
+/**
  * wma_set_cts2self_for_p2p_go() - set CTS2SELF command for P2P GO.
  * @wma_handle:                  pointer to wma handle.
  * @cts2self_for_p2p_go:         value needs to set to firmware.
@@ -427,6 +439,18 @@ QDF_STATUS wma_get_sar_limit(WMA_HANDLE handle,
  */
 QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 		struct sar_limit_cmd_params *sar_limit_params);
+
+/**
+ * wma_send_coex_config_cmd() - Send coex config params
+ * @wma_handle: wma handle
+ * @coex_cfg_params: struct to coex cofig params
+ *
+ * This function sends WMI command to send coex cofig params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_send_coex_config_cmd(WMA_HANDLE wma_handle,
+				    struct coex_config_params *coex_cfg_params);
 
 /**
  * wma_set_qpower_config() - update qpower config in wma

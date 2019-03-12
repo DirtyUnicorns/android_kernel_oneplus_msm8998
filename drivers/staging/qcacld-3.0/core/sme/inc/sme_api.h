@@ -1735,6 +1735,14 @@ QDF_STATUS sme_get_sar_power_limits(tHalHandle hal,
 QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
 				    struct sar_limit_cmd_params *sar_limit_cmd);
 
+/**
+ * sme_send_coex_config_cmd() - Send COEX config params
+ * @coex_cfg_params: struct to coex config params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params);
+
 void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 
 
@@ -2203,6 +2211,18 @@ QDF_STATUS sme_set_vc_mode_config(uint32_t vc_bitmap);
 QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
 		bool is_tos_active, uint32_t max_off_chan_time,
 		uint32_t rest_time, bool skip_dfs_chan);
+
+/**
+ * sme_is_conn_state_connected() -- check if SME connection state is connected
+ * @hal: global hal handle
+ * @session_id: current Session Id
+ *
+ * This API checks if the current SME connection state is connected for the
+ * given session id.
+ *
+ * Return: True if connected, false if any other state.
+ */
+bool sme_is_conn_state_connected(tHalHandle hal, uint8_t session_id);
 
 /**
  * sme_fast_reassoc() - invokes FAST REASSOC command

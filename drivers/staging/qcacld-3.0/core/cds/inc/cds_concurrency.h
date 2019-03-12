@@ -848,6 +848,8 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
 		enum sir_conn_update_reason reason);
+bool cds_is_dbs_req_for_channel(uint8_t channel_id);
+
 enum cds_conc_next_action cds_need_opportunistic_upgrade(void);
 QDF_STATUS cds_next_actions(uint32_t session_id,
 		enum cds_conc_next_action action,
@@ -1018,15 +1020,19 @@ bool cds_is_safe_channel(uint8_t channel);
  */
 bool cds_disallow_mcc(uint8_t channel);
 /**
- * cds_get_alternate_channel_for_sap() - checks if any alternate channel can
+ * cds_get_diff_band_ch_for_sap() - checks if any alternate channel can
  * be obtained from PCL if current channel can't be allowed
  *
- * This function checks if any alternate channel can be obtained
- * from PCL or other means if current channel for SAP can't be allowed
+ * @channel: Present STA channel
+ *
+ * This API will get the PCl chanel list based upon the current connections
+ * and will return the different band channel to operate in DBS mode if enabled
+ * It may happen that STA+SAP SCC is not allowed, so we have to select a random
+ * preferred channel in different band than the STA channel.
  *
  * Return: New channel
  */
-uint8_t cds_get_alternate_channel_for_sap(void);
+uint8_t cds_get_diff_band_ch_for_sap(uint8_t channel);
 
 /**
  * cds_set_cur_conc_system_pref() - set the value of cur_conc_system_pref
@@ -1129,4 +1135,14 @@ bool cds_is_sta_sap_scc(uint8_t sap_ch);
  * Restart: None
  */
 void cds_flush_sta_ap_intf_work(hdd_context_t *hdd_ctx);
+
+/**
+ * cds_set_pcl_for_existing_combo() - Set PCL for existing connection
+ * @mode: Connection mode of type 'cds_con_mode'
+ *
+ * Set the PCL for an existing connection
+ *
+ * Return: None
+ */
+void cds_set_pcl_for_existing_combo(enum cds_con_mode mode);
 #endif /* __CDS_CONCURRENCY_H */

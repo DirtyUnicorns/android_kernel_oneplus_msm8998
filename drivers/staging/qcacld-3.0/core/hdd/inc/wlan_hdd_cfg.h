@@ -2860,7 +2860,7 @@ enum hdd_dot11_mode {
  *
  * @min: 0x0
  * @max: 0xffffffff
- * @defalut: 0xc8a
+ * @defalut: 0xc83
  *
  * |31  12|  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
  * +------+------+------+------+------+------+------+-----+-----+
@@ -2893,7 +2893,7 @@ enum hdd_dot11_mode {
 #define CFG_LATENCY_FLAGS_ULTRALOW_NAME    "wlm_latency_flags_ultralow"
 #define CFG_LATENCY_FLAGS_ULTRALOW_MIN     (0x0)
 #define CFG_LATENCY_FLAGS_ULTRALOW_MAX     (0xffffffff)
-#define CFG_LATENCY_FLAGS_ULTRALOW_DEFAULT (0xc8a)
+#define CFG_LATENCY_FLAGS_ULTRALOW_DEFAULT (0xc83)
 
 #define CFG_INTF0_MAC_ADDR_NAME                  "Intf0MacAddress"
 #define CFG_INTF0_MAC_ADDR_MIN                   "000000000000"
@@ -3607,6 +3607,20 @@ enum hdd_dot11_mode {
 #define CFG_FW_RSSI_MONITORING_MIN             (0)
 #define CFG_FW_RSSI_MONITORING_MAX             (1)
 #define CFG_FW_RSSI_MONITORING_DEFAULT         (1)
+
+/*
+ * gEnableRTTsupport
+ *
+ * @Min: 0 - Disabled
+ * @Max: 1 - Enabled
+ * @Default: 1 - Enabled
+ *
+ * The param is used to enable/disable support for RTT
+ */
+#define CFG_ENABLE_RTT_SUPPORT            "gEnableRTTSupport"
+#define CFG_ENABLE_RTT_SUPPORT_DEFAULT    (1)
+#define CFG_ENABLE_RTT_SUPPORT_MIN        (0)
+#define CFG_ENABLE_RTT_SUPPORT_MAX        (1)
 
 /*
  * <ini>
@@ -10746,7 +10760,7 @@ enum restart_beaconing_on_ch_avoid_rule {
 
 /* Hold wakelock for unicast RX packets for the specified duration  */
 #define CFG_RX_WAKELOCK_TIMEOUT_NAME     "rx_wakelock_timeout"
-#define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT  (7)
+#define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT  (50)
 #define CFG_RX_WAKELOCK_TIMEOUT_MIN      (0)
 #define CFG_RX_WAKELOCK_TIMEOUT_MAX      (100)
 
@@ -11280,7 +11294,7 @@ enum restart_beaconing_on_ch_avoid_rule {
  * gAutoBmpsTimerValue - Set Auto BMPS Timer value
  * @Min: 0
  * @Max: 120
- * @Default: 5
+ * @Default: 90
  *
  * This ini is used to set Auto BMPS Timer value in seconds
  *
@@ -11295,7 +11309,7 @@ enum restart_beaconing_on_ch_avoid_rule {
 #define CFG_AUTO_PS_ENABLE_TIMER_NAME          "gAutoBmpsTimerValue"
 #define CFG_AUTO_PS_ENABLE_TIMER_MIN           (0)
 #define CFG_AUTO_PS_ENABLE_TIMER_MAX           (120)
-#define CFG_AUTO_PS_ENABLE_TIMER_DEFAULT       (5)
+#define CFG_AUTO_PS_ENABLE_TIMER_DEFAULT       (90)
 
 #ifdef WLAN_ICMP_DISABLE_PS
 /*
@@ -12465,7 +12479,12 @@ enum hw_filter_mode {
  *   OUI data Len : 00
  *   Info Mask : 35 - Check for NSS, VHT Caps and Band
  *   Capabilities: 6C - (NSS == 3 or 4) && VHT Caps Preset && Band == 2G
- *
+ * OUI 5 : 001018
+ *   OUI data Len : 06
+ *   OUI Data : 02FF009C0000
+ *   OUI data Mask: BC - 10111100
+ *   Info Mask : 25 - Check for NSS and Band
+ *   Capabilities: 48 - NSS == 4 && Band == 2G
  * This ini is used to specify the AP OUIs with which only 1x1 connection
  * is allowed.
  *
@@ -12478,7 +12497,7 @@ enum hw_filter_mode {
  * </ini>
  */
 #define CFG_ACTION_OUI_CONNECT_1X1_NAME    "gActionOUIConnect1x1"
-#define CFG_ACTION_OUI_CONNECT_1X1_DEFAULT "000C43 00 25 42 001018 06 02FFF02C0000 BC 25 42 001018 06 02FF040C0000 BC 25 42 00037F 00 35 6C"
+#define CFG_ACTION_OUI_CONNECT_1X1_DEFAULT "000C43 00 25 42 001018 06 02FFF02C0000 BC 25 42 001018 06 02FF040C0000 BC 25 42 00037F 00 35 6C 001018 06 02FF009C0000 BC 25 48"
 
 /*
  * <ini>
@@ -14298,7 +14317,7 @@ enum hw_filter_mode {
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_NAME    "oce_enable_fils_discovery_sap"
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_MIN     (0)
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_MAX     (1)
-#define CFG_ENABLE_FILS_DISCOVERY_SAP_DEFAULT (0)
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_DEFAULT (1)
 
 /*
  * <ini>
@@ -14784,6 +14803,186 @@ enum hw_filter_mode {
 
 /*
  * <ini>
+ * gSetBTCMode - Config BTC mode
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * 0 - TDD
+ * 1 - FDD
+ * 2 - Hybrid
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BTC_MODE_NAME     "gSetBTCMode"
+#define CFG_SET_BTC_MODE_MIN      (0)
+#define CFG_SET_BTC_MODE_MAX      (2)
+#define CFG_SET_BTC_MODE_DEFAULT  (0)
+
+/*
+ * <ini>
+ * gSetAntennaIsolation - Set Antenna Isolation
+ * @Min: 0
+ * @Max: 255
+ * @Default: 25
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_ANTENNA_ISOLATION_NAME     "gSetAntennaIsolation"
+#define CFG_SET_ANTENNA_ISOLATION_MIN      (0)
+#define CFG_SET_ANTENNA_ISOLATION_MAX      (255)
+#define CFG_SET_ANTENNA_ISOLATION_DEFAULT  (25)
+
+/*
+ * <ini>
+ * gSetMaxTxPowerForBTC - Set Max WLAN Tx power in COEX scenario
+ * @Min: 0
+ * @Max: 100
+ * @Default: 100
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_MAX_TX_POWER_FOR_BTC_NAME     "gSetMaxTxPowerForBTC"
+#define CFG_SET_MAX_TX_POWER_FOR_BTC_MIN      (0)
+#define CFG_SET_MAX_TX_POWER_FOR_BTC_MAX      (100)
+#define CFG_SET_MAX_TX_POWER_FOR_BTC_DEFAULT  (100)
+
+/*
+ * <ini>
+ * gSetWlanLowRssiThreshold - Set WLAN low RSSI threshold for BTC mode switching
+ * @Min: -100
+ * @Max: 0
+ * @Default: -80
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_WLAN_LOW_RSSI_THRESHOLD_NAME     "gSetWlanLowRssiThreshold"
+#define CFG_SET_WLAN_LOW_RSSI_THRESHOLD_MIN      (-100)
+#define CFG_SET_WLAN_LOW_RSSI_THRESHOLD_MAX      (0)
+#define CFG_SET_WLAN_LOW_RSSI_THRESHOLD_DEFAULT  (-80)
+
+/*
+ * <ini>
+ * gSetBtLowRssiThreshold - Set BT low RSSI threshold for BTC mode switching
+ * @Min: -100
+ * @Max: 0
+ * @Default: -80
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_LOW_RSSI_THRESHOLD_NAME     "gSetBtLowRssiThreshold"
+#define CFG_SET_BT_LOW_RSSI_THRESHOLD_MIN      (-100)
+#define CFG_SET_BT_LOW_RSSI_THRESHOLD_MAX      (0)
+#define CFG_SET_BT_LOW_RSSI_THRESHOLD_DEFAULT  (-80)
+
+/*
+ * <ini>
+ * gSetBtInterferenceLowLL - Set lower limit of low level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -25
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_LOW_LL_NAME     "gSetBtInterferenceLowLL"
+#define CFG_SET_BT_INTERFERENCE_LOW_LL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_LOW_LL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_LOW_LL_DEFAULT  (-25)
+
+/*
+ * <ini>
+ * gSetBtInterferenceLowUL - Set upper limit of low level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -21
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_LOW_UL_NAME     "gSetBtInterferenceLowUL"
+#define CFG_SET_BT_INTERFERENCE_LOW_UL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_LOW_UL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_LOW_UL_DEFAULT  (-21)
+
+/*
+ * <ini>
+ * gSetBtInterferenceMediumLL - Set lower limit of medium level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -20
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_LL_NAME     "gSetBtInterferenceMediumLL"
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_LL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_LL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_LL_DEFAULT  (-20)
+
+/*
+ * <ini>
+ * gSetBtInterferenceMediumUL - Set upper limit of medium level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -16
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_UL_NAME     "gSetBtInterferenceMediumUL"
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_UL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_UL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_MEDIUM_UL_DEFAULT  (-16)
+
+/*
+ * <ini>
+ * gSetBtInterferenceHighLL - Set lower limit of high level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -15
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_HIGH_LL_NAME     "gSetBtInterferenceHighLL"
+#define CFG_SET_BT_INTERFERENCE_HIGH_LL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_HIGH_LL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_HIGH_LL_DEFAULT  (-15)
+
+/*
+ * <ini>
+ * gSetBtInterferenceHighUL - Set upper limit of high level BT interference
+ * @Min: -100
+ * @Max: 100
+ * @Default: -11
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_BT_INTERFERENCE_HIGH_UL_NAME     "gSetBtInterferenceHighUL"
+#define CFG_SET_BT_INTERFERENCE_HIGH_UL_MIN      (-100)
+#define CFG_SET_BT_INTERFERENCE_HIGH_UL_MAX      (100)
+#define CFG_SET_BT_INTERFERENCE_HIGH_UL_DEFAULT  (-11)
+
+/*
+ * <ini>
  * channel_select_logic_conc - Set channel selection logic
  * for different concurrency combinations to DBS or inter band
  * MCC. Default is DBS for STA+STA and STA+P2P.
@@ -14952,6 +15151,55 @@ enum hw_filter_mode {
 #define CFG_MWS_COEX_5G_NR_PWR_LIMIT_MAX       (0xFFFFFFFF)
 #define CFG_MWS_COEX_5G_NR_PWR_LIMIT_DEFAULT   (0x00000000)
 #endif
+/*
+ * <ini>
+ * roam_preauth_retry_count
+ *
+ * @Min: 1
+ * @Max: 10
+ * @Default: 5
+ *
+ * The maximum number of software retries for preauth or
+ * reassoc made before picking up the next candidate for
+ * connection during roaming.
+ *
+ * Related: N/A
+ *
+ * Supported Features: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_PREAUTH_RETRY_COUNT_NAME    "roam_preauth_retry_count"
+#define CFG_ROAM_PREAUTH_RETRY_COUNT_MIN     (1)
+#define CFG_ROAM_PREAUTH_RETRY_COUNT_MAX     (10)
+#define CFG_ROAM_PREAUTH_RETRY_COUNT_DEFAULT (5)
+
+/*
+ * <ini>
+ * roam_preauth_no_ack_timeout
+ *
+ * @Min: 5
+ * @Max: 50
+ * @Default: 5
+ *
+ * Time to wait (in ms) after sending an preauth or reassoc
+ * request which didn’t have an ack, before considering
+ * it as a failure and making another software retry.
+ *
+ * Related: N/A
+ *
+ * Supported Features: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_PREAUTH_NO_ACK_TIMEOUT_NAME    "roam_preauth_no_ack_timeout"
+#define CFG_ROAM_PREAUTH_NO_ACK_TIMEOUT_MIN     (5)
+#define CFG_ROAM_PREAUTH_NO_ACK_TIMEOUT_MAX     (50)
+#define CFG_ROAM_PREAUTH_NO_ACK_TIMEOUT_DEFAULT (5)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -15886,9 +16134,23 @@ struct hdd_config {
 	bool enable_rtt_mac_randomization;
 	bool enable_ftopen;
 	bool is_unit_test_framework_enabled;
+	uint8_t set_btc_mode;
+	uint8_t set_antenna_isolation;
+	uint8_t set_max_tx_power_for_btc;
+	int16_t set_wlan_low_rssi_threshold;
+	int16_t set_bt_low_rssi_threshold;
+	int16_t set_bt_interference_low_ll;
+	int16_t set_bt_interference_low_ul;
+	int16_t set_bt_interference_medium_ll;
+	int16_t set_bt_interference_medium_ul;
+	int16_t set_bt_interference_high_ll;
+	int16_t set_bt_interference_high_ul;
 	bool disable_channel;
 	uint32_t enable_secondary_rate;
 	bool roam_force_rssi_trigger;
+	uint32_t roam_preauth_retry_count;
+	uint32_t roam_preauth_no_ack_timeout;
+	uint32_t enable_rtt_support;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

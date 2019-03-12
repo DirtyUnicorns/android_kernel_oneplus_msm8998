@@ -968,6 +968,10 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 		params->roam_offload_enabled = roam_req->RoamOffloadEnabled;
 		params->roam_offload_params.ho_delay_for_rx =
 				roam_req->ho_delay_for_rx;
+		params->roam_offload_params.roam_preauth_retry_count =
+				roam_req->roam_preauth_retry_count;
+		params->roam_offload_params.roam_preauth_no_ack_timeout =
+				roam_req->roam_preauth_no_ack_timeout;
 		params->prefer_5ghz = roam_req->Prefer5GHz;
 		params->roam_rssi_cat_gap = roam_req->RoamRssiCatGap;
 		params->select_5ghz_margin = roam_req->Select5GHzMargin;
@@ -1012,13 +1016,17 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 		params->min_delay_btw_roam_scans,
 		params->roam_trigger_reason_bitmask);
 
+	WMA_LOGD(FL("roam_preauth_retry_count: %d, roam_preauth_no_ack_timeout: %d"),
+		 params->roam_offload_params.roam_preauth_retry_count,
+		 params->roam_offload_params.roam_preauth_no_ack_timeout);
+
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
 				scan_cmd_fp, params);
+	qdf_mem_free(params);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	WMA_LOGD("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
-	qdf_mem_free(params);
 	return status;
 }
 
@@ -1153,6 +1161,7 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static const char *wma_roam_reason_to_string(uint32_t roam_reason)
 {
 	switch (roam_reason) {
@@ -1174,6 +1183,7 @@ static const char *wma_roam_reason_to_string(uint32_t roam_reason)
 		return "unknown";
 	}
 }
+#endif
 
 static const char *wma_roam_event_to_string(uint32_t roam_reason)
 {
@@ -3077,7 +3087,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		roam_synch_data_len += sizeof(roam_offload_synch_ind);
 	}
 
-	WMA_LOGI("synch payload: LEN bcn:%d, req:%d, rsp:%d",
+	WMA_LOGD("synch payload: LEN bcn:%d, req:%d, rsp:%d",
 			bcn_probe_rsp_len,
 			reassoc_req_len,
 			reassoc_rsp_len);
@@ -3217,6 +3227,22 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 		return status;
 	}
 
+	if (synch_frame_event->bcn_probe_rsp_len >
+	    param_buf->num_bcn_probe_rsp_frame ||
+	    synch_frame_event->reassoc_req_len >
+	    param_buf->num_reassoc_req_frame ||
+	    synch_frame_event->reassoc_rsp_len >
+	    param_buf->num_reassoc_rsp_frame) {
+		WMA_LOGE("fixed/actual len err: bcn:%d/%d req:%d/%d rsp:%d/%d",
+			 synch_frame_event->bcn_probe_rsp_len,
+			 param_buf->num_bcn_probe_rsp_frame,
+			 synch_frame_event->reassoc_req_len,
+			 param_buf->num_reassoc_req_frame,
+			 synch_frame_event->reassoc_rsp_len,
+			 param_buf->num_reassoc_rsp_frame);
+		return status;
+	}
+
 	vdev_id = synch_frame_event->vdev_id;
 	iface = &wma->interfaces[vdev_id];
 
@@ -3282,12 +3308,6 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	}
 
 	if (synch_frame_event->reassoc_rsp_len) {
-		if (!iface->roam_synch_frame_ind.bcn_probe_rsp ||
-		    !iface->roam_synch_frame_ind.reassoc_req) {
-			WMA_LOGE("failed: No probe or reassoc rsp");
-			wma_free_roam_synch_frame_ind(iface);
-			return status;
-		}
 		iface->roam_synch_frame_ind.reassoc_rsp_len =
 				synch_frame_event->reassoc_rsp_len;
 
@@ -5022,7 +5042,7 @@ static int wma_extscan_find_unique_scan_ids(const u_int8_t *cmd_param_info)
 	/* Find the unique number of scan_id's for grouping */
 	prev_scan_id = src_rssi->scan_cycle_id;
 	scan_ids_cnt = 1;
-	for (i = 1; i < event->num_entries_in_page; i++) {
+	for (i = 1; i < param_buf->num_rssi_list; i++) {
 		src_rssi++;
 
 		if (prev_scan_id != src_rssi->scan_cycle_id) {
@@ -5066,7 +5086,7 @@ static int wma_fill_num_results_per_scan_id(const u_int8_t *cmd_param_info,
 	t_scan_id_grp->flags = src_rssi->flags;
 	t_scan_id_grp->buckets_scanned = src_rssi->buckets_scanned;
 	t_scan_id_grp->num_results = 1;
-	for (i = 1; i < event->num_entries_in_page; i++) {
+	for (i = 1; i < param_buf->num_rssi_list; i++) {
 		src_rssi++;
 		if (prev_scan_id == src_rssi->scan_cycle_id) {
 			t_scan_id_grp->num_results++;
@@ -5139,7 +5159,8 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 		}
 
 		ap = &t_scan_id_grp->ap[0];
-		for (j = 0; j < t_scan_id_grp->num_results; j++) {
+		for (j = 0; j < QDF_MIN(t_scan_id_grp->num_results,
+					param_buf->num_bssid_list); j++) {
 			ap->channel = src_hotlist->channel;
 			ap->ts = WMA_MSEC_TO_USEC(src_rssi->tstamp);
 			ap->rtt = src_hotlist->rtt;
