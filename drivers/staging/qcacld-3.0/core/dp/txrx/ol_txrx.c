@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2446,6 +2446,48 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 }
 
 /**
+ * ol_txrx_mon_cb_deregister() - Deregister pkt capture mode callback
+ * @void:
+ *
+ * Return: None
+ */
+void ol_txrx_mon_cb_deregister(void)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (qdf_unlikely(!pdev)) {
+		qdf_print("%s: pdev is NULL!\n", __func__);
+		qdf_assert(0);
+		return;
+	}
+
+	pdev->mon_osif_dev = NULL;
+	pdev->mon_cb = NULL;
+}
+
+/**
+ * ol_txrx_mon_cb_register() - Register pkt capture mode callback
+ * @osif_vdev: the virtual device's OS shim object
+ * @mon_cb: callback to register
+ *
+ * Return: None
+ */
+void ol_txrx_mon_cb_register(void *osif_vdev,
+			     ol_txrx_mon_callback_fp mon_cb)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (qdf_unlikely(!pdev)) {
+		qdf_print("%s: pdev is NULL!\n", __func__);
+		qdf_assert(0);
+		return;
+	}
+
+	pdev->mon_osif_dev = osif_vdev;
+	pdev->mon_cb = mon_cb;
+}
+
+/**
  *ol_txrx_vdev_register - Link a vdev's data object with the
  * matching OS shim vdev object.
  *
@@ -3753,7 +3795,7 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			  "[%s][%d]: ref delete peer %pK peer->ref_cnt = %d",
 			  fname, line, peer, rc);
 	}
@@ -3876,7 +3918,7 @@ void ol_txrx_peer_detach(ol_txrx_peer_handle peer, bool start_peer_unmap_timer)
 	/* debug print to dump rx reorder state */
 	/* htt_rx_reorder_log_print(vdev->pdev->htt_pdev); */
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		   "%s:peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)",
 		   __func__, peer,
 		   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
