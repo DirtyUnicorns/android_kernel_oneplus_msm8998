@@ -682,13 +682,6 @@ static int prefer_idle_write_wrapper(struct cgroup_subsys_state *css,
 }
 #endif
 
-static s64
-cached_boost_read(struct cgroup_subsys_state *css, struct cftype *cft)
-{
-	struct schedtune *st = css_st(css);
-	return st->cached_boost;
-}
-
 static struct cftype files[] = {
 	{
 		.name = "boost",
@@ -699,10 +692,6 @@ static struct cftype files[] = {
 		.name = "prefer_idle",
 		.read_u64 = prefer_idle_read,
 		.write_u64 = prefer_idle_write_wrapper,
-	},
-	{
-		.name= "cached_boost",
-		.read_s64 = cached_boost_read,
 	},
 	{ }	/* terminate */
 };
