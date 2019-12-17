@@ -460,10 +460,13 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 	}
 
 	/* Put VIDEO_STREAMING_INPUT_EVENT check here to cover max_boost cases */
-	if (test_bit(VIDEO_STREAMING_INPUT_EVENT, &b->state))
+	if (test_bit(VIDEO_STREAMING_INPUT_EVENT, &b->state)) {
 		disable_schedtune_boost("top-app", false);
-	else if (video_streaming)
+		set_prefer_idle("top-app", 1);
+	} else if (video_streaming) {
 		disable_schedtune_boost("top-app", true);
+		set_prefer_idle("top-app", 0);
+	}
 
 	/* return early if being max bosted */
 	if (test_bit(MAX_BOOST, &b->state) ||

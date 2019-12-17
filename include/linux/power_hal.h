@@ -44,8 +44,10 @@ void set_energy_aware_enable_status(bool val);
 
 #if defined(CONFIG_SCHED_TUNE) && defined(CONFIG_CGROUP_SCHEDTUNE)
 int disable_schedtune_boost(char *st_name, bool disable);
+int set_prefer_idle(char *st_name, bool val);
 #else
 static inline int disable_schedtune_boost(char *st_name, bool disable) { }
+static inline int set_prefer_idle(char *st_name, bool val) { }
 #endif
 
 #else

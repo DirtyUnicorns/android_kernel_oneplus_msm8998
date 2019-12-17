@@ -898,6 +898,19 @@ int disable_schedtune_boost(char *st_name, bool disable)
 
 	return 0;
 }
+
+int set_prefer_idle(char *st_name, bool val)
+{
+	int cur_cached_boost;
+	struct schedtune *st = getSchedtune(st_name);
+
+	if (!st)
+		return -EINVAL;
+
+	st->prefer_idle = val;
+
+	return 0;
+}
 #endif /* IN_KERNEL_POWERHAL */
 
 #else /* CONFIG_CGROUP_SCHEDTUNE */

@@ -1444,6 +1444,7 @@ void *msm_vidc_open(int core_id, int session_type)
 
 #ifdef CONFIG_IN_KERNEL_POWERHAL
 	disable_schedtune_boost("top-app", true);
+	set_prefer_idle("top-app", 0);
 	video_streaming = true;
 #endif /* IN_KERNEL_POWERHAL */
 	return inst;
@@ -1611,6 +1612,7 @@ int msm_vidc_close(void *instance)
 	kref_put(&inst->kref, close_helper);
 #ifdef CONFIG_IN_KERNEL_POWERHAL
 	disable_schedtune_boost("top-app", false);
+	set_prefer_idle("top-app", 1);
 	video_streaming = false;
 #endif /* IN_KERNEL_POWERHAL */
 	return 0;
