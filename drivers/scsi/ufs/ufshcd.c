@@ -56,6 +56,7 @@
 
 #include <linux/cpu_input_boost.h>
 #include <linux/binfmts.h>
+#include <linux/power_hal.h>
 
 #ifdef CONFIG_IN_KERNEL_POWERHAL
 struct Scsi_Host *ph_host;
@@ -1763,11 +1764,6 @@ static ssize_t ufshcd_clkgate_enable_store(struct device *dev,
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 	unsigned long flags;
 	u32 value;
-
-#ifdef CONFIG_IN_KERNEL_POWERHAL
-	if (task_is_booster(current))
-		return count;
-#endif /* IN_KERNEL_POWERHAL */
 
 	if (kstrtou32(buf, 0, &value))
 		return -EINVAL;
