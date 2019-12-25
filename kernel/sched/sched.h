@@ -1190,9 +1190,9 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
 	 */
 	smp_wmb();
 #ifdef CONFIG_THREAD_INFO_IN_TASK
-	WRITE_ONCE(p->cpu, cpu);
+	p->cpu = cpu;
 #else
-	WRITE_ONCE(task_thread_info(p)->cpu, cpu);
+	task_thread_info(p)->cpu = cpu;
 #endif
 	p->wake_cpu = cpu;
 #endif
