@@ -2045,6 +2045,7 @@ static void __ufshcd_hibern8_release(struct ufs_hba *hba, bool no_sched)
 	schedule_delayed_work(&hba->hibern8_on_idle.enter_work,
 			      delay_in_jiffies);
 }
+	
 
 static void ufshcd_hibern8_release(struct ufs_hba *hba, bool no_sched)
 {
